@@ -1,0 +1,39 @@
+version: "3.7"
+
+services:
+  traefik:
+    image: traefik
+    ports:
+      - "80:80"
+      - "8080:8080"
+    command:
+      - --api.dashboard=true
+      - --api.insecure=true
+      - --providers.docker=true
+      - --entrypoints.http.address=:80
+      
+      # - --experimental.plugins.auth-middleware.modulename=git.vajab.ir:8586/sadaghiani/auth-middleware
+      # - --experimental.plugins.auth-middleware.version=v1.0.1
+      - --experimental.localPlugins.auth-middleware.modulename=middleware/auth-middleware
+
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - $GOPATH:/plugins-local
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.traefik.loadbalancer.server.port=8080
+      - traefik.http.routers.traefik-router-80.rule=Host(`traefik.localhost`)
+      - traefik.http.middlewares.my-auth-middleware.plugin.auth-middleware.secretKey=qwertyuiop
+      - traefik.http.middlewares.my-auth-middleware.plugin.auth-middleware.getAuthorizationHeaderKey=Authorization
+      - traefik.http.middlewares.my-auth-middleware.plugin.auth-middleware.setUserIDHeaderKey=userID
+
+
+  listener:
+    image: ealen/echo-server
+    ports:
+      - "8090:80"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.listener.rule=Host(`listener.localhost`)
+      - traefik.http.routers.listener.entrypoints=http
+      - "traefik.http.routers.listener.middlewares=my-auth-middleware"

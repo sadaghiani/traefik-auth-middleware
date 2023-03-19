@@ -1,0 +1,15 @@
+displayName: auth-middleware
+type: middleware
+# iconPath: .assets/icon.png
+
+import: middleware/auth-middleware
+
+summary: 'A middleware to add the user ID to the request if there is a valid token'
+
+testData:
+  secretKey:
+    mySecretKey
+  getAuthorizationHeaderKey:
+    Authorization
+  setUserIDHeaderKey:
+    userID
