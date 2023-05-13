@@ -34,6 +34,6 @@ services:
       - "8090:80"
     labels:
       - traefik.enable=true
-      - traefik.http.routers.listener.rule=Host(`listener.localhost`)
+      - traefik.http.routers.listener.rule=Host(`listener.ir`)
       - traefik.http.routers.listener.entrypoints=http
       - "traefik.http.routers.listener.middlewares=my-auth-middleware"
