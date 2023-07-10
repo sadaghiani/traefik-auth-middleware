@@ -1,22 +1,43 @@
-## Auth Middleware
+# Traefik auth middleware
 
-A middleware to add the user ID to the request if there is a valid token
+A middleware for validation JWT and passing claims to the header.
 
 ## 1. Install
 
-1.. **Traefik dynamic config** in [docker-compose.yml](./example/docker-compose.yml)
+**Traefik config** in [example](./example/)
 
-1.1 Start middleware
+### 1.1.1 Start middleware local
 
     version: "3.x"
     services:
       traefik:
         ...
         command:
-          - --experimental.localPlugins.auth-middleware.modulename=middleware/auth-middleware
+          - --experimental.localPlugins.auth-middleware.modulename=github.com/sadaghiani/traefik-auth-middleware
+          ...
+        volumes:
+          - $GOPATH/src/github.com/sadaghiani/traefik-auth-middleware:/plugins-local/src/github.com/sadaghiani/traefik-auth-middleware
           ...
 
-1.2 Active middleware
+**OR**
+
+### 1.1.2 Start middleware public
+
+    version: "3.x"
+    services:
+      traefik:
+        ...
+        command:
+          - --experimental.plugins.auth-middleware.modulename=github.com/sadaghiani/traefik-auth-middleware
+          - --experimental.plugins.auth-middleware.version=v1.1.0
+          ...
+
+Note :
+
+- The "traefik-plugin" topic must be set to github repository.
+
+
+### 1.2 Active middleware
 
     version: "3.x"
     services:
@@ -24,35 +45,24 @@ A middleware to add the user ID to the request if there is a valid token
         ...
         labels:
         
-	      # secretKey must read from docker secret file.
-          - traefik.http.middlewares.my-auth-middleware.plugin.auth-middleware.secretKey=qwertyuiop
-          
-          # The header containing the jwt token
-          # Authorization : Bearer eyJhbGciOiJIUzI1NiI...
-          - traefik.http.middlewares.my-auth-middleware.plugin.auth-middleware.getAuthorizationHeaderKey=Authorization
-          
-          # The header where you want the user ID to be placed
-          # userID : 12345678
-          - traefik.http.middlewares.my-auth-middleware.plugin.auth-middleware.setUserIDHeaderKey=userID
+          - traefik.http.middlewares.my-auth-middleware.plugin.auth-middleware.secretKey=165d042e466fcff0ce6914dae33e5b93 
+          - traefik.http.middlewares.my-auth-middleware.plugin.auth-middleware.nameOfAuthorizationHeader=Authorization
+          - traefik.http.middlewares.my-auth-middleware.plugin.auth-middleware.nameOfUserIDClaim=userID
+          - traefik.http.middlewares.my-auth-middleware.plugin.auth-middleware.nameOfRoleIDClaim=roleID
+          - traefik.http.middlewares.my-auth-middleware.plugin.auth-middleware.nameForUserIDHeader=x-user-id
+          - traefik.http.middlewares.my-auth-middleware.plugin.auth-middleware.nameForRoleIDHeader=x-role-id
           
           ...
 
-1.3 Add local plugin 
 
-    version: "3.x"
-    services:
-      traefik:
-        ...
-        volumes:
-        
-          # Root path of the middleware project:/plugins-local/src/middleware/auth-middleware
-          - $GOPATH:/plugins-local
-          
-          ...
+Note :
+
+- The "secretKey" must be set to secret manager.
+
 
 ## 2. Usage
 
-2.. Service config  in  [docker-compose.yml](./example/docker-compose.yml)
+Service config in [example](./example/)
 
     version: "3.x"
     services:
@@ -63,3 +73,7 @@ A middleware to add the user ID to the request if there is a valid token
           ...
 
 
+## References
+
+- https://plugins.traefik.io/create
+- https://github.com/traefik/plugindemo

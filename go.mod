@@ -1,4 +1,4 @@
-module middleware/auth-middleware
+module github.com/sadaghiani/traefik-auth-middleware
 
 go 1.20
 

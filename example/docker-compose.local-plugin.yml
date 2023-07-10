@@ -1,0 +1,40 @@
+version: "3.7"
+
+services:
+  traefik:
+    image: traefik
+    ports:
+      - "80:80"
+      - "8080:8080"
+    command:
+      - --api.dashboard=true
+      - --api.insecure=true
+      - --providers.docker=true
+      - --entrypoints.http.address=:80
+      
+      - --experimental.localPlugins.auth-middleware.modulename=github.com/sadaghiani/traefik-auth-middleware
+
+    volumes:
+      - '/var/run/docker.sock:/var/run/docker.sock'
+      - $GOPATH/src/github.com/sadaghiani/traefik-auth-middleware:/plugins-local/src/github.com/sadaghiani/traefik-auth-middleware
+    labels:
+      - traefik.enable=true
+      - traefik.http.services.traefik.loadbalancer.server.port=8080
+      - traefik.http.routers.traefik-router-80.rule=Host(`traefik.localhost`)
+      - traefik.http.middlewares.my-auth-middleware.plugin.auth-middleware.secretKey=165d042e466fcff0ce6914dae33e5b93
+      - traefik.http.middlewares.my-auth-middleware.plugin.auth-middleware.nameOfAuthorizationHeader=Authorization
+      - traefik.http.middlewares.my-auth-middleware.plugin.auth-middleware.nameOfUserIDClaim=userID
+      - traefik.http.middlewares.my-auth-middleware.plugin.auth-middleware.nameOfRoleIDClaim=roleID
+      - traefik.http.middlewares.my-auth-middleware.plugin.auth-middleware.nameForUserIDHeader=x-user-id
+      - traefik.http.middlewares.my-auth-middleware.plugin.auth-middleware.nameForRoleIDHeader=x-role-id
+
+
+  listener:
+    image: ealen/echo-server
+    ports:
+      - "8090:80"
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.listener.rule=Host(`listener.localhost`)
+      - traefik.http.routers.listener.entrypoints=http
+      - traefik.http.routers.listener.middlewares=my-auth-middleware

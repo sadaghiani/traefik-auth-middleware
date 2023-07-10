@@ -1,15 +1,20 @@
-displayName: auth-middleware
+displayName: traefik-auth-middleware
 type: middleware
-# iconPath: .assets/icon.png
 
-import: middleware/auth-middleware
+import: github.com/sadaghiani/traefik-auth-middleware
 
-summary: 'A middleware to add the user ID to the request if there is a valid token'
+summary: 'A middleware for validation JWT and passing claims to the header.'
 
 testData:
   secretKey:
     mySecretKey
-  getAuthorizationHeaderKey:
+  nameOfAuthorizationHeader:
     Authorization
-  setUserIDHeaderKey:
+  nameOfUserIDClaim:
     userID
+  nameOfRoleIDClaim:
+    roleID
+  nameForUserIDHeader:
+    x-user-id
+  nameForRoleIDHeader:
+    x-role-id

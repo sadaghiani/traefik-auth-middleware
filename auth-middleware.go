@@ -1,4 +1,4 @@
-package auth_middleware
+package traefik_auth_middleware
 
 import (
 	"context"
@@ -13,11 +13,11 @@ import (
 
 type Config struct {
 	SecretKey                 string `json:"secretKey"`
-	GetAuthorizationHeaderKey string `json:"getAuthorizationHeaderKey"`
-	GetUserIDHeaderKey        string `json:"getUserIDHeaderKey"`
-	GetRoleIDHeaderKey        string `json:"getRoleIDHeaderKey"`
-	SetUserIDHeaderKey        string `json:"setUserIDHeaderKey"`
-	SetRoleIDHeaderKey        string `json:"setRoleIDHeaderKey"`
+	NameOfAuthorizationHeader string `json:"nameOfAuthorizationHeader"`
+	NameOfUserIDClaim         string `json:"nameOfUserIDClaim"`
+	NameOfRoleIDClaim         string `json:"nameOfRoleIDClaim"`
+	NameForUserIDHeader       string `json:"nameForUserIDHeader"`
+	NameForRoleIDHeader       string `json:"nameForRoleIDHeader"`
 }
 
 func CreateConfig() *Config {
@@ -28,11 +28,11 @@ type AuthMiddleware struct {
 	next                      http.Handler
 	name                      string
 	SecretKey                 string
-	GetAuthorizationHeaderKey string
-	GetUserIDHeaderKey        string
-	GetRoleIDHeaderKey        string
-	SetUserIDHeaderKey        string
-	SetRoleIDHeaderKey        string
+	NameOfAuthorizationHeader string
+	NameOfUserIDClaim         string
+	NameOfRoleIDClaim         string
+	NameForUserIDHeader       string
+	NameForRoleIDHeader       string
 	logger                    *log.Logger
 }
 
@@ -42,24 +42,24 @@ func New(ctx context.Context, next http.Handler, config *Config, name string) (h
 		next:                      next,
 		name:                      name,
 		SecretKey:                 config.SecretKey,
-		GetAuthorizationHeaderKey: config.GetAuthorizationHeaderKey,
-		GetUserIDHeaderKey:        config.GetUserIDHeaderKey,
-		GetRoleIDHeaderKey:        config.GetRoleIDHeaderKey,
-		SetUserIDHeaderKey:        config.SetUserIDHeaderKey,
-		SetRoleIDHeaderKey:        config.SetRoleIDHeaderKey,
+		NameOfAuthorizationHeader: config.NameOfAuthorizationHeader,
+		NameOfUserIDClaim:         config.NameOfUserIDClaim,
+		NameOfRoleIDClaim:         config.NameOfRoleIDClaim,
+		NameForUserIDHeader:       config.NameForUserIDHeader,
+		NameForRoleIDHeader:       config.NameForRoleIDHeader,
 		logger:                    log.New(os.Stdout, "", log.LstdFlags),
 	}, nil
 }
 
 func (a *AuthMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 
-	if len(req.Header.Get(a.GetAuthorizationHeaderKey)) != 0 {
-		splitToken := strings.Fields(req.Header.Get(a.GetAuthorizationHeaderKey))
+	if len(req.Header.Get(a.NameOfAuthorizationHeader)) != 0 {
+		splitToken := strings.Fields(req.Header.Get(a.NameOfAuthorizationHeader))
 		if len(splitToken) == 2 || strings.ToLower(splitToken[0]) == "bearer" {
-			res, err := a.getUserID(splitToken[1])
+			res, err := a.getPayloadData(splitToken[1])
 			if err == nil {
-				req.Header.Set(a.SetUserIDHeaderKey, res[a.SetUserIDHeaderKey])
-				req.Header.Set(a.SetRoleIDHeaderKey, res[a.SetRoleIDHeaderKey])
+				req.Header.Set(a.NameForUserIDHeader, res[a.NameForUserIDHeader])
+				req.Header.Set(a.NameForRoleIDHeader, res[a.NameForRoleIDHeader])
 			} else {
 				a.logger.Println(err)
 			}
@@ -69,7 +69,7 @@ func (a *AuthMiddleware) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	a.next.ServeHTTP(rw, req)
 }
 
-func (a *AuthMiddleware) getUserID(tokenInput string) (map[string]string, error) {
+func (a *AuthMiddleware) getPayloadData(tokenInput string) (map[string]string, error) {
 
 	data := make(map[string]string)
 	claims := jwt.MapClaims{}
@@ -80,10 +80,10 @@ func (a *AuthMiddleware) getUserID(tokenInput string) (map[string]string, error)
 		return nil, err
 	}
 
-	if fmt.Sprint(claims[a.GetUserIDHeaderKey]) == "<nil>" || fmt.Sprint(claims[a.GetRoleIDHeaderKey]) == "<nil>" {
+	if fmt.Sprint(claims[a.NameOfUserIDClaim]) == "<nil>" || fmt.Sprint(claims[a.NameOfRoleIDClaim]) == "<nil>" {
 		return nil, fmt.Errorf("invalid token payload")
 	}
-	data[a.SetUserIDHeaderKey] = fmt.Sprint(claims[a.GetUserIDHeaderKey])
-	data[a.SetRoleIDHeaderKey] = fmt.Sprint(claims[a.GetRoleIDHeaderKey])
+	data[a.NameForUserIDHeader] = fmt.Sprint(claims[a.NameOfUserIDClaim])
+	data[a.NameForRoleIDHeader] = fmt.Sprint(claims[a.NameOfRoleIDClaim])
 	return data, nil
 }
