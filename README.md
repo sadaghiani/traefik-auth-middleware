@@ -4,7 +4,7 @@ A middleware for validation JWT and passing claims to the header.
 
 ## 1. Install
 
-**Traefik config** in [example](./example/)
+**Traefik config** in [example](https://github.com/sadaghiani/traefik-auth-middleware/tree/master/example)
 
 ### 1.1.1 Start middleware local
 
@@ -62,7 +62,7 @@ Note :
 
 ## 2. Usage
 
-Service config in [example](./example/)
+Service config in [example](https://github.com/sadaghiani/traefik-auth-middleware/tree/master/example)
 
     version: "3.x"
     services:
